@@ -1,3 +1,9 @@
+'''
+Implementation of a Point Range Quadtree.
+
+Author: Pawel Szczurko
+'''
+
 from math import sqrt
 from random import uniform
 
@@ -110,16 +116,18 @@ class PRQuadTree():
         self.sw = None
         self.se = None
 
-    def insert(self, point):
+    def insert(self, x, y):
         '''
         Inserts a point into the PRQuadtree.
 
         Args:
-            point: a Point to be insterted
+            x: x-coordinate of point
+            y: y-coordinate of point
 
         Returns:
             A boolean returning true on success, false on failure.
         '''
+        point = Point(x, y)
         if not self.box.contains_point(point):
             # point does not belong to this box
             return False
@@ -130,13 +138,13 @@ class PRQuadTree():
         if self.nw == None:
             self._subdivide()
 
-        if self.nw.insert(point):
+        if self.nw.insert(x,y):
             return True
-        if self.ne.insert(point):
+        if self.ne.insert(x,y):
             return True
-        if self.sw.insert(point):
+        if self.sw.insert(x,y):
             return True
-        if self.se.insert(point):
+        if self.se.insert(x,y):
             return True
 
     def query_range(self, rng):
@@ -185,6 +193,17 @@ class PRQuadTree():
             A list of k closest points
         ''' 
         def _sort_key(p):
+            '''
+            Internal method used to provide python method with a key
+            (coordinate distance) on which to sort.
+
+            Args:
+                p: Point to sort
+
+            Returns:
+                A coordinate distance between the search point and 
+                the provided point
+            '''
             return sqrt( pow(point.x-p.x, 2) + pow(p.y-point.y,2))
         nearby = None
         for i in range(1,20):
@@ -196,6 +215,10 @@ class PRQuadTree():
             
     
     def _subdivide(self):
+        '''
+        Divides a node into nw,ne,sw,se pieces so that a new point 
+        can be inserted.
+        '''
         hs = self.box.half_size / 2
 
         nw_x = self.box.center.x - hs
@@ -227,6 +250,15 @@ class PRQuadTree():
         #print "se: %s" % se_center
 
     def print_all_points(self, root):
+        '''
+        Prints all points stored in the PRQuadtree.
+
+        Args:
+            root: start point, or the root of the Quadtree
+
+        Returns:
+            out: a string with coordinates
+        '''
         out = ""
         for point in root.points:
             out += "%s, " % point
@@ -241,7 +273,24 @@ class PRQuadTree():
         return out
 
     def __str__(self):
+        '''
+        Prints the points of the nw,ne,sw,se blocks of the
+        given PRQuadTree node.
+
+        Returns:
+            A string of points in the blocks
+        '''
         def _print_msg(loc, name):
+            '''
+            Generates string based on the number of points stored in the
+            provided node.
+
+            Args:
+                loc: a PRQuadTree node (ie nw,ne,sw,se)
+
+            Returns:
+                A string with point and name
+            '''
             if len(loc.points) == 0:
                 return "%s point: no points\n" % (name)
             else:
@@ -258,31 +307,3 @@ class PRQuadTree():
             tree += _print_msg(self.se, "se")
         return tree
 
-def test():
-    x = Point(2.3,2.5)
-    b = Box(Point(5,5), 50)
-    b2 = Box(Point(50,50), 50)
-
-    print b.intersect(b2)
-    qt = PRQuadTree(b2)
-
-    qt.insert(Point(1,1))
-    qt.insert(Point(4,14))
-    qt.insert(Point(14,14))
-    qt.insert(Point(16,4))
-    qt.insert(Point(1,2))
-    qt.insert(Point(2,3))
-    qt.insert(Point(5,3))
-    
-    for x in range(100):
-        qt.insert(Point(uniform(0.0,100.0), uniform(0.0,100.0)))
-
-    #print qt.print_all_points(qt)
-
-    pt = Point(2,2)
-    nearby = qt.query_k_nearest(pt, 20)
-    c = 1
-    for point in nearby:
-        print "%s: %s" % (c, point)
-        c+=1
-test()

@@ -2,17 +2,55 @@ from math import sqrt
 from random import uniform
 
 class Point():
+    '''
+    Represents an (x,y) coordinate point on a grid.
+    '''
+
     def __init__(self, x, y):
+        '''
+        Constructs a coordinate Point.
+
+        Args:
+            x: x-position
+            y: y-position
+        '''
         self.x = float(x)
         self.y = float(y)
+
     def __str__(self):
+        '''
+        Overwritting the default to string method
+        of the Point class.
+        '''
         return "(%s, %s)" % (self.x, self.y)
 
 class Box():
+    '''
+    Class defining a square on the coordinate system via a center point and
+    half of square width.
+    '''
+
     def __init__(self, center, half_size):
+        '''
+        Construct a Box object. 
+
+        Args:
+            center: a Point type specifying the center of the square
+            half_size: half the length of the square
+        '''
         self.center = center 
         self.half_size = float(half_size)
+
     def contains_point(self, point):
+        '''
+        Verifies that the given point is within this square.
+
+        Args:
+            point: a Point type to check if it's in the square
+
+        Returns:
+            A boolean indicating whether the point is within the square
+        '''
         left_bound = self.center.x - self.half_size
         right_bound = self.center.x + self.half_size
         bottom_bound = self.center.y - self.half_size
@@ -21,14 +59,23 @@ class Box():
                 and point.y >=bottom_bound and point.y <=top_bound):
             return True
         return False
+
     def intersect(self, other_box):
+        '''
+        Checks if the provided box/square intersects with this square.
+
+        Args:
+            other_box: another Box object
+
+        Returns:
+            A boolean indicating if the two intersect anywhere
+        '''
         # self bottom left corner
         aX1 = self.center.x - self.half_size
         aY1 = self.center.y - self.half_size
         # self top right corner
         aX2 = self.center.x + self.half_size
         aY2 = self.center.y + self.half_size
-        #print "corner of self: (%s, %s) and (%s,%s)" % (aX1, aY1, aX2, aY2)
         
         # other_box bottom left corner
         bX1 = other_box.center.x - other_box.half_size
@@ -37,20 +84,25 @@ class Box():
         bX2 = other_box.center.x + other_box.half_size
         bY2 = other_box.center.y + other_box.half_size
 
-        #print "corner of other: (%s, %s) and (%s,%s)" % (bX1, bY1, bX2, bY2)
-        #print "aX1 < bx2: %s" % ( aX1 < bX2)
-        #print "aX2 > bx1: %s" % ( aX2 > bX1)
-        #print "aY1 < bY2: %s" % ( aY1 < bY2)
-        #print "aY2 > bY1: %s" % ( aY2 > bY1)
-
         if aX1 < bX2 and aX2 > bX1 and aY1 < bY2 and aY2 > bY1:
             return True
         return False
 
 class PRQuadTree():
+    '''
+    Class representing a Point Range Quadtree.
+    '''
+    
+    # number of coordinate points to store per node
     QT_NODE_CAPACITY = 1
 
     def __init__(self, box):
+        '''
+        Constructs a PR Quadtree given an initial square.
+
+        Args:
+            box: a Box representing initial square
+        '''
         self.box = box
         self.points = []
         self.nw = None
@@ -59,6 +111,15 @@ class PRQuadTree():
         self.se = None
 
     def insert(self, point):
+        '''
+        Inserts a point into the PRQuadtree.
+
+        Args:
+            point: a Point to be insterted
+
+        Returns:
+            A boolean returning true on success, false on failure.
+        '''
         if not self.box.contains_point(point):
             # point does not belong to this box
             return False
@@ -79,6 +140,15 @@ class PRQuadTree():
             return True
 
     def query_range(self, rng):
+        '''
+        Returns the points in the provided range.
+
+        Args:
+            rng: a Box range from which to retrieve points
+
+        Returns:
+            A list of points within the provided range
+        '''
         final_points = []
         if not self.box.intersect(rng):
             return final_points
@@ -104,7 +174,16 @@ class PRQuadTree():
         return final_points
 
     def query_k_nearest(self, point, k):
+        '''
+        Returns k points closest to the provided point.
 
+        Args:
+            point: a Point from which to search for other points.
+            k: number of closest points to return
+        
+        Returns:
+            A list of k closest points
+        ''' 
         def _sort_key(p):
             return sqrt( pow(point.x-p.x, 2) + pow(p.y-point.y,2))
         nearby = None
